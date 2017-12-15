@@ -41,7 +41,8 @@ def run():
                 CCN=-1
             else:      
                 print(CCN)
-                r = requests.post("http://{}:{}/cyclomatic".format(masterip,masterport),json={'sha': json_data['sha'], 'CCN': CCN})
+                final=requests.get("http://{}:{}/aggregator".format(masterip,masterport),json={'CCN': CCN})
+                json_data=json.loads(final.text)
         else:
             print("Bad Response")
             print("Done for this commit {} with CCN= {}".format(json_data['sha'],CCN))

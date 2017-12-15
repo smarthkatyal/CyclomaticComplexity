@@ -1,6 +1,7 @@
 import json, requests
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
+import string
 
 app = Flask(__name__)
 api = Api(app)
@@ -48,7 +49,32 @@ class processor(Resource):
     
 api.add_resource(processor, "/master", endpoint="master")
 
-    
+class aggregator(Resource):
+    def __init__(self):
+        global masterObj
+        self.server = masterObj
+        super(aggregator, self).__init__()
+        self.reqparser = reqparse.RequestParser()
+        #self.reqparser.add_argument('sha', type=string, location='json')  ##Whether slave has downloaded the repository
+        self.reqparser.add_argument('CCN', type=float, location='json') ##Whether slave has calculated the complexity
+     
+     ##This function gets the calculated CCN from the slave and when all slaves return it calculates the average
+    def get(self):
+        args = self.reqparser.parse_args()  # parse the arguments from the POST
+        #print("Received sha {}".format(args['sha']))
+        print("Received complexity {}".format(args['CCN']))
+        self.server.completedShaList.append({'CNN':args['CCN']})
+        if len(self.server.completedShaList) == len(self.server.shaList):
+            tot = 0
+            avg=0
+            for x in self.server.completedShaList:
+                if x['CCN'] > 0:
+                    tot += x['CCN']
+            avg = tot / len(self.server.completedShaList)
+            print("CYCLOMATIC COMPLEXITY OF REPO IS: {}".format(avg))
+        return {'success':True}
+            
+api.add_resource(aggregator, "/aggregator", endpoint="aggregator")
     
 class master():
     def __init__(self):
@@ -67,7 +93,7 @@ class master():
             self.shaList.append(i['sha'])
             #print("Commit Sha: {}".format(i['sha']))
         print("\nNumber of commits:{}".format(len(self.shaList)))
-        self.listOfCCs = []
+        self.completedShaList = []
         
 
 
