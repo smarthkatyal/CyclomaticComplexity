@@ -27,7 +27,28 @@ class initializer(Resource):
         pass
 api.add_resource(initializer, "/repo", endpoint="repo")
 
+class processor(Resource):
+    def __init__(self):
+        global masterObj
+        self.server = masterObj
+        super(processor, self).__init__()
+        self.reqparser = reqparse.RequestParser()
+        self.reqparser.add_argument('repoState', type=int, location = 'json')  ##Whether slave has downloaded the repository
+        self.reqparser.add_argument('CCN', type=float, location='json') ##Whether slave has calculated the complexity
+        
+    ##Function to send sha to slave once a slave connects    
+    def get(self):
+        if self.server.gotSlaves < self.server.totalSlaves:  ##Not got all slaves
+            return {'status': 0}
+        if len(self.server.shaList) == 0:  ##All commits given
+            return {'status': 1}
+        shaVal = self.server.shaList[0]  ##Store in temp variable and delete from shalist
+        del self.server.shaList[0] 
+        return {'sha':shaVal,'status':2}
+    
+api.add_resource(processor, "/master", endpoint="master")
 
+    
     
 class master():
     def __init__(self):
@@ -40,11 +61,11 @@ class master():
         self.startTime = 0.0  # Start time for the timer
         # request repository info using the github API
         self.shaList = []  # List containing all commit sha values
-        r = requests.get("https://api.github.com/repos/{}commits?page=1&per_page=200".format(repoShortPath)) 
+        r = requests.get("https://api.github.com/repos/{}commits?page=1&per_page=200".format(repoShortPath),auth=("smarthkatyal", "#@123myname#")) 
         commits = json.loads(r.text)
         for i in commits:
             self.shaList.append(i['sha'])
-            print("Commit Sha: {}".format(i['sha']))
+            #print("Commit Sha: {}".format(i['sha']))
         print("\nNumber of commits:{}".format(len(self.shaList)))
         self.listOfCCs = []
         
