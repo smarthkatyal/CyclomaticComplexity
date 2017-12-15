@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, time
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 import string
@@ -18,11 +18,14 @@ class initializer(Resource):
     ##When slaves connects, this is the first function it will call in master, master will the slaves a repo
     def get(self):
         args = self.reqparser.parse_args()
+        url=self.server.repoShortPath
         if args['repoState'] == 0:  ###slave does not have repo, then send
             print("Got a new slave, sending repo to pull...")
-            return {'repoUrl': "https://github.com/smarthkatyal/FileSystem"}  # 'https://github.com/fchollet/deep-learning-models'
+            return {'repoUrl': "https://github.com/{}".format(url)}  # 'https://github.com/fchollet/deep-learning-models'
         if args['repoState'] == 1:  ##slave has the repo, then just incriment ready slaves counter
             self.server.gotSlaves += 1
+            if self.server.totalSlaves == self.server.gotSlaves:
+                self.server.timer = time.time()
         print("Slaves obtained: {}".format(self.server.gotSlaves))
     def post(self):
         pass
@@ -71,7 +74,10 @@ class aggregator(Resource):
                 if x > 0:
                     tot += x
             avg = tot / len(self.server.completedShaList)
+            finish = time.time()
+            duration = finish-self.server.timer
             print("CYCLOMATIC COMPLEXITY OF REPO IS: {}".format(avg))
+            print("Total Time Taken: {}".format(duration))
         return {'success':True}
             
 api.add_resource(aggregator, "/aggregator", endpoint="aggregator")
@@ -79,15 +85,16 @@ api.add_resource(aggregator, "/aggregator", endpoint="aggregator")
 class master():
     def __init__(self):
         #Below should be configurable
-        repoShortPath="smarthkatyal/FileSystem/"
-        self.totalSlaves = 1
+        #self.repoShortPath="smarthkatyal/FileSystem/"
+        self.repoShortPath="smart-fun/XmlToJson/"
+        self.totalSlaves = 2
         #Configurable part ends
         
         self.gotSlaves = 0  # Number of slaves who have connected to the manager
-        self.startTime = 0.0  # Start time for the timer
+        self.timer = 0.0  # Start time for the timer
         # request repository info using the github API
         self.shaList = []  # List containing all commit sha values
-        r = requests.get("https://api.github.com/repos/{}commits?page=1&per_page=200".format(repoShortPath),auth=("smarthkatyal", "#@123myname#")) 
+        r = requests.get("https://api.github.com/repos/{}commits?page=1&per_page=200".format(self.repoShortPath),auth=("smarthkatyal", "#@123myname#")) 
         commits = json.loads(r.text)
         for i in commits:
             self.shaList.append(i['sha'])
