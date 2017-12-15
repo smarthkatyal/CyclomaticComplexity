@@ -63,13 +63,13 @@ class aggregator(Resource):
         args = self.reqparser.parse_args()  # parse the arguments from the POST
         #print("Received sha {}".format(args['sha']))
         print("Received complexity {}".format(args['CCN']))
-        self.server.completedShaList.append({'CNN':args['CCN']})
-        if len(self.server.completedShaList) == len(self.server.shaList):
+        self.server.completedShaList.append(args['CCN'])
+        if len(self.server.completedShaList) == self.server.shaListLength:
             tot = 0
             avg=0
             for x in self.server.completedShaList:
-                if x['CCN'] > 0:
-                    tot += x['CCN']
+                if x > 0:
+                    tot += x
             avg = tot / len(self.server.completedShaList)
             print("CYCLOMATIC COMPLEXITY OF REPO IS: {}".format(avg))
         return {'success':True}
@@ -83,7 +83,7 @@ class master():
         self.totalSlaves = 1
         #Configurable part ends
         
-        self.gotSlaves = 0  # Number of workers who have connected to the manager
+        self.gotSlaves = 0  # Number of slaves who have connected to the manager
         self.startTime = 0.0  # Start time for the timer
         # request repository info using the github API
         self.shaList = []  # List containing all commit sha values
@@ -93,6 +93,7 @@ class master():
             self.shaList.append(i['sha'])
             #print("Commit Sha: {}".format(i['sha']))
         print("\nNumber of commits:{}".format(len(self.shaList)))
+        self.shaListLength=len(self.shaList)
         self.completedShaList = []
         
 
