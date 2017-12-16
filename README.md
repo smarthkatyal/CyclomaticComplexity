@@ -5,7 +5,7 @@ ScalableComputing Assignment 2 (CyclomaticComplexity Using Rest Services)
 
 
 Hey! 
-This repository contains the server code for the chat server assignment.  This readme contains information about **dependencies and how to run the program** The code was written using **Python 3.5**
+This repository contains the server code for the rest based distributed computing task.  This readme contains information about **dependencies and how to run the program** The code was written using **Python 3.5**
 
 
 >#### <i class="icon-upload"></i> Submission details:
